@@ -48,7 +48,6 @@ import org.bukkit.persistence.PersistentDataType;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collection;
-import java.util.Objects;
 import java.util.UUID;
 
 public class BlockEventListener implements Listener {
@@ -120,11 +119,12 @@ public class BlockEventListener implements Listener {
 
                 // Since Minecraft 1.20.6 item stacks use components instead of NBT.
                 // The block_entity_data tag works like the BlockEntityTag used to, but requires an "id" field for the type of block.
-                final var nbt = NBT.itemStackToNBT(item);
-                final var entityData = nbt.getOrCreateCompound("components").getOrCreateCompound("minecraft:block_entity_data");
-                entityData.setString("id", item.getType().getKey().toString());
-                entityData.getOrCreateCompound("PublicBukkitValues").mergeCompound(handler.getNbtCopy());
-                item = Objects.requireNonNull(NBT.itemStackFromNBT(nbt));
+                // Use NBT.modify() to avoid conversion issues with complex NBT data
+                NBT.modify(item, readWriteItemNBT -> {
+                    final var entityData = readWriteItemNBT.getOrCreateCompound("components").getOrCreateCompound("minecraft:block_entity_data");
+                    entityData.setString("id", item.getType().getKey().toString());
+                    entityData.getOrCreateCompound("PublicBukkitValues").mergeCompound(handler.getNbtCopy());
+                });
             } else {
                 NBT.modify(item, readWriteItemNBT -> {
                     readWriteItemNBT.getOrCreateCompound("BlockEntityTag").getOrCreateCompound("PublicBukkitValues").mergeCompound(handler.getNbtCopy());
