@@ -119,10 +119,14 @@ public class BlockEventListener implements Listener {
                 item.setItemMeta(meta);
 
                 // Since Minecraft 1.20.6 item stacks use components instead of NBT.
-                // The block_entity_data tag works like the BlockEntityTag used to, but requires an "id" field for the type of block.
+                // The block_entity_data component requires an "id" field specifying the block entity type.
+                // Note: The item's color is preserved via the root NBT "id" field (e.g., "minecraft:blue_shulker_box"),
+                // which is separate from the block_entity_data's "id" field (always "minecraft:shulker_box").
                 final var nbt = NBT.itemStackToNBT(item);
                 final var entityData = nbt.getOrCreateCompound("components").getOrCreateCompound("minecraft:block_entity_data");
-                entityData.setString("id", item.getType().getKey().toString());
+                // All shulker boxes use the same block entity type "minecraft:shulker_box" regardless of color.
+                // The block entity type is not the same as the item/block type - colors are preserved separately.
+                entityData.setString("id", "minecraft:shulker_box");
                 entityData.getOrCreateCompound("PublicBukkitValues").mergeCompound(handler.getNbtCopy());
                 item = Objects.requireNonNull(NBT.itemStackFromNBT(nbt));
             } else {
